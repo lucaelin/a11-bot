@@ -1,10 +1,15 @@
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
+const config = require('./config.json');
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const config = require('./config.json');
 client.login(config.token);
+
+
+const names = require('./names.json');
+const launch = new Date('2019-07-16T13:32:00.000Z');
 
 async function waitFor(c, ref) {
   const [d, h, m, s] = c.split(' ');
@@ -22,26 +27,28 @@ async function waitFor(c, ref) {
   console.log(new Date(t));
 }
 
-async function* chat() {
+async function* chat(defaultSkip = true) {
   const options = {};
   const dom  = await JSDOM.fromFile(config.source, options);
   const body = dom.window.document.body;
   const view = dom.window.document.defaultView;
 
-  const launch = new Date('2019-07-16T13:32:00.000Z');
-  
   let skip = true;
+  let currentSpeaker = names['CC'];
   for(const e of body.childNodes) {
-    const text = e.textContent;
-    const res = /\n\n(\d\d \d\d \d\d \d\d)        /.exec(text);
+    const text = e.textContent.trim();
+    if (!text.length) continue;
+    const res = /^(\d\d \d\d \d\d \d\d)$/.exec(text);
     if(res !== null) {
       skip = false;
       await waitFor(res[1], launch).catch(()=>{
-        skip = true;
+        skip = defaultSkip;
       });
     } else {
-      if (!skip && e.textContent.length) {
-        yield e.textContent;
+      if (e instanceof view.HTMLFontElement) {
+        currentSpeaker = names[text] || text;
+      } else if (!skip) {
+        yield [currentSpeaker, text];
       }
     }
   }
