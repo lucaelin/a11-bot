@@ -11,6 +11,6 @@
   "dependencies": {
     "@types/jsdom": "^12.2.4",
     "discord.js": "^11.5.1",
-    "jsdom": "^15.1.1"
+    "jsdom": "^16.5.0"
   }
 }
